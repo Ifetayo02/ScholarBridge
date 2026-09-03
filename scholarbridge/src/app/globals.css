@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/* 1. Tailwind v4 Theme Mapping - MUST be here */
+@theme {
+  /* Fonts */
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-serif), ui-serif, Georgia, serif;
+
+  /* mapping ScholarBridge color utility classes to CSS variables */
+  
+  /* Core */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+
+  /* Special Card mapping for dark mode elevation */
+  --color-card: var(--card);
+  --color-card-elevated: var(--card-elevated);
+
+  /* Semantic Palettes */
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+
+  /* Badges */
+  --color-badge-success-bg: var(--badge-success-bg);
+  --color-badge-success-text: var(--badge-success-text);
+  --color-badge-warning-bg: var(--badge-warning-bg);
+  --color-badge-warning-text: var(--badge-warning-text);
+}
+
+/* 2. Define the variable values */
+@layer base {
+  :root {
+    /* --- LIGHT MODE VALUES --- */
+    --background: #FBFBF9;
+    --foreground: #0F392B; /* Primary Text */
+
+    --card: #FFFFFF;
+    --card-elevated: #FFFFFF;
+    
+    --border: #E5E7EB;
+
+    --primary: #0F392B;    /* Forest */
+    --secondary: #AAB8B0;  /* Secondary Text */
+    --accent: #D97706;     /* Amber */
+
+    --badge-success-bg: #E8F5E9;
+    --badge-success-text: #0F392B;
+    --badge-warning-bg: #FEF3C7;
+    --badge-warning-text: #D97706;
+  }
+
+  /* next-themes will add .dark to the html tag when dark mode is active */
+  .dark {
+    /* --- DARK MODE VALUES --- */
+    --background: #101714;
+    --foreground: #F3F7F4; /* Primary Text */
+
+    --card: #18231E;
+    --card-elevated: #213029; /* Elevated Card */
+    
+    --border: #2B3A32;
+
+    --primary: #72A98F;    /* Sage Green */
+    --secondary: #AAB8B0;  /* Secondary Text */
+    --accent: #F59E0B;     /* Golden Amber */
+
+    --badge-success-bg: #163D2A;
+    --badge-success-text: #F3F7F4;
+    --badge-warning-bg: #4A3510;
+    --badge-warning-text: #F59E0B;
+  }
+}
+
+/* 3. Global CSS settings */
+@layer base {
+  /* Transition property for smooth color shifting */
+  *, *::before, *::after {
+    transition-property: color, background-color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms; /* slightly longer for better view */
+  }
+
+  html {
+    @apply antialiased;
+  }
+}
