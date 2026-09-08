@@ -1,8 +1,15 @@
 import { getPublishedScholarships } from "@/services/scholarships";
 import { ScholarshipsDirectory } from "@/components/scholarships/scholarships-directory";
 
-export default async function ScholarshipsPage() {
-  const scholarships = await getPublishedScholarships();
+export default async function ScholarshipsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+  const scholarships = await getPublishedScholarships(q);
 
-  return <ScholarshipsDirectory initialScholarships={scholarships} />;
+  return (
+    <ScholarshipsDirectory initialScholarships={scholarships} initialQuery={q} />
+  );
 }

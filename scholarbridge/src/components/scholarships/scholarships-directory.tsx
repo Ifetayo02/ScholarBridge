@@ -16,7 +16,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { buttonVariants } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import type { Scholarship } from "@/types/scholarship";
+import type { FundingType, Scholarship } from "@/types/scholarship";
+import { FUNDING_TYPE_LABELS } from "@/types/scholarship";
 
 function isUrgent(deadline: string | null) {
   if (!deadline) return false;
@@ -36,32 +37,46 @@ function formatDeadline(deadline: string | null) {
 
 export function ScholarshipsDirectory({
   initialScholarships,
+  initialQuery,
 }: {
   initialScholarships: Scholarship[];
+  initialQuery?: string;
 }) {
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
-  const [selectedFunding, setSelectedFunding] = useState<string[]>([]);
+  const [selectedFunding, setSelectedFunding] = useState<FundingType[]>([]);
   const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState("soonest");
 
-  // Derive filter option lists from actual data rather than hardcoding them
   const destinationOptions = useMemo(
-    () => Array.from(new Set(initialScholarships.flatMap((s) => s.countries))).sort(),
+    () =>
+      Array.from(
+        new Set(initialScholarships.map((s) => s.destination_country))
+      ).sort(),
     [initialScholarships]
   );
   const levelOptions = useMemo(
-    () => Array.from(new Set(initialScholarships.flatMap((s) => s.study_levels))).sort(),
+    () =>
+      Array.from(
+        new Set(initialScholarships.flatMap((s) => s.study_levels))
+      ).sort(),
     [initialScholarships]
   );
   const fundingScopeOptions = useMemo(
-    () => Array.from(new Set(initialScholarships.map((s) => s.funding_type).filter(Boolean))).sort() as string[],
+    () =>
+      Array.from(
+        new Set(
+          initialScholarships
+            .map((s) => s.funding_type)
+            .filter((f): f is FundingType => f !== null)
+        )
+      ),
     [initialScholarships]
   );
 
-  function toggleFilter(
-    list: string[],
-    setList: React.Dispatch<React.SetStateAction<string[]>>,
-    val: string
+  function toggleFilter<T>(
+    list: T[],
+    setList: React.Dispatch<React.SetStateAction<T[]>>,
+    val: T
   ) {
     setList(list.includes(val) ? list.filter((item) => item !== val) : [...list, val]);
   }
@@ -82,7 +97,7 @@ export function ScholarshipsDirectory({
         (s.funding_type && selectedFunding.includes(s.funding_type));
       const matchesDestination =
         selectedDestinations.length === 0 ||
-        selectedDestinations.some((d) => s.countries.includes(d));
+        selectedDestinations.includes(s.destination_country);
       return matchesLevel && matchesFunding && matchesDestination;
     });
 
@@ -95,20 +110,18 @@ export function ScholarshipsDirectory({
           new Date(b.application_deadline).getTime()
         );
       });
-    } else if (sortBy === "newest") {
-      result = [...result].reverse(); // relies on query already ordering by deadline; swap for created_at if you add it to the select
     }
 
     return result;
   }, [initialScholarships, selectedLevels, selectedFunding, selectedDestinations, sortBy]);
 
-  const activeTags = [
+  const activeTags: { tag: string; remove: () => void }[] = [
     ...selectedLevels.map((tag) => ({
       tag,
       remove: () => toggleFilter(selectedLevels, setSelectedLevels, tag),
     })),
     ...selectedFunding.map((tag) => ({
-      tag,
+      tag: FUNDING_TYPE_LABELS[tag],
       remove: () => toggleFilter(selectedFunding, setSelectedFunding, tag),
     })),
     ...selectedDestinations.map((tag) => ({
@@ -125,14 +138,19 @@ export function ScholarshipsDirectory({
             <Link href="/" className="font-serif text-2xl font-bold tracking-tight text-primary">
               ScholarBridge
             </Link>
-            <div className="relative hidden w-72 md:block">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary" aria-hidden="true" />
+            <form action="/scholarships" className="relative hidden w-72 md:block">
+              <Search
+                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary"
+                aria-hidden="true"
+              />
               <Input
                 type="search"
+                name="q"
+                defaultValue={initialQuery}
                 placeholder="Search scholarships..."
                 className="h-9 w-full rounded-md border-border bg-background pl-9 pr-3 text-xs text-foreground placeholder:text-secondary focus-visible:ring-primary"
               />
-            </div>
+            </form>
           </div>
 
           <nav className="flex items-center gap-6 text-sm font-medium">
@@ -212,7 +230,7 @@ export function ScholarshipsDirectory({
                         onChange={() => toggleFilter(selectedFunding, setSelectedFunding, scope)}
                         className="h-4 w-4 rounded border-border text-primary accent-primary focus:ring-primary"
                       />
-                      <span>{scope}</span>
+                      <span>{FUNDING_TYPE_LABELS[scope]}</span>
                     </label>
                   ))}
                 </div>
@@ -223,7 +241,9 @@ export function ScholarshipsDirectory({
           <section className="lg:col-span-3">
             <div className="flex flex-wrap items-baseline justify-between gap-4">
               <h1 className="font-serif text-3xl font-semibold tracking-tight text-primary">
-                {filtered.length} Scholarship{filtered.length === 1 ? "" : "s"} Available
+                {initialQuery
+                  ? `Results for "${initialQuery}" (${filtered.length})`
+                  : `${filtered.length} Scholarship${filtered.length === 1 ? "" : "s"} Available`}
               </h1>
 
               <div className="flex items-center gap-1 text-xs text-secondary">
@@ -235,7 +255,6 @@ export function ScholarshipsDirectory({
                     className="cursor-pointer appearance-none rounded-sm border-none bg-transparent pr-4 font-semibold text-foreground focus:outline-none"
                   >
                     <option value="soonest">Soonest Deadline</option>
-                    <option value="newest">Newly Added</option>
                   </select>
                   <ChevronDown className="pointer-events-none absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 text-secondary" />
                 </div>
@@ -261,7 +280,9 @@ export function ScholarshipsDirectory({
             <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
               {filtered.length === 0 && (
                 <p className="col-span-full text-sm text-secondary">
-                  No scholarships match these filters — try clearing some.
+                  {initialQuery
+                    ? `No scholarships match "${initialQuery}" — try a different keyword.`
+                    : "No scholarships match these filters — try clearing some."}
                 </p>
               )}
 
@@ -278,7 +299,7 @@ export function ScholarshipsDirectory({
                   >
                     <div className="flex items-start justify-between">
                       <span className="rounded border border-border bg-background px-2.5 py-0.5 text-xs text-secondary">
-                        {s.countries[0] ?? "Multiple regions"}
+                        Study in {s.destination_country}
                       </span>
                       <button type="button" aria-label={`Save ${s.title}`} className="text-secondary transition hover:text-primary">
                         <Bookmark className="h-4 w-4" />
@@ -305,6 +326,14 @@ export function ScholarshipsDirectory({
                         <p className="text-[11px] uppercase tracking-wider text-secondary">Level</p>
                         <p className="text-sm text-foreground">
                           {s.study_levels.join(", ") || "Not specified"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wider text-secondary">Open to</p>
+                        <p className="text-sm text-foreground">
+                          {s.is_globally_eligible
+                            ? "All nationalities"
+                            : s.eligible_countries.join(", ") || "See details"}
                         </p>
                       </div>
                     </div>
