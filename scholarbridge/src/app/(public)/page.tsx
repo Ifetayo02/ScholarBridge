@@ -5,7 +5,7 @@ import {
   User,
   Bookmark,
   FlaskConical,
-  Palette,
+  Landmark,
   Globe,
   Briefcase,
   Send,
@@ -16,7 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
-const quickFilters = ["STEM", "First-Gen", "Women in Tech", "Study Abroad"];
+// Matches real scholarship_fields_of_study values you're actually seeding
+const quickFilters = ["STEM", "Public Policy", "Business", "Humanities"];
 
 const featuredScholarships = [
   {
@@ -45,11 +46,12 @@ const featuredScholarships = [
   },
 ];
 
+// Same fix here — was "Arts & Design" (not a real seeded field), now matches actual data
 const categories = [
-  { name: "STEM", icon: FlaskConical, slug: "stem" },
-  { name: "Arts & Design", icon: Palette, slug: "arts-design" },
-  { name: "Social Sciences", icon: Globe, slug: "social-sciences" },
-  { name: "Business", icon: Briefcase, slug: "business" },
+  { name: "STEM", icon: FlaskConical, field: "STEM" },
+  { name: "Business", icon: Briefcase, field: "Business" },
+  { name: "Social Sciences", icon: Globe, field: "Social Sciences" },
+  { name: "Public Policy", icon: Landmark, field: "Public Policy" },
 ];
 
 const howItWorks = [
@@ -152,13 +154,10 @@ export default function LandingPage() {
         </form>
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-          {quickFilters.map((filter) => (
-            <Link
-              key={filter}
-              href={`/scholarships?tag=${encodeURIComponent(filter.toLowerCase())}`}
-            >
+          {quickFilters.map((field) => (
+            <Link key={field} href={`/scholarships?field=${encodeURIComponent(field)}`}>
               <Badge variant="secondary" className="cursor-pointer font-normal border border-border bg-card text-foreground hover:border-primary hover:text-primary">
-                {filter}
+                {field}
               </Badge>
             </Link>
           ))}
@@ -262,8 +261,8 @@ export default function LandingPage() {
             const Icon = c.icon;
             return (
               <Link
-                key={c.slug}
-                href={`/scholarships?category=${c.slug}`}
+                key={c.field}
+                href={`/scholarships?field=${encodeURIComponent(c.field)}`}
                 className="flex flex-col items-center gap-3 rounded-lg border border-border bg-card p-8 transition-colors hover:border-primary"
               >
                 <Icon className="h-6 w-6 text-primary" aria-hidden="true" />

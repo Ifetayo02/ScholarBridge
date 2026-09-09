@@ -17,6 +17,8 @@ export interface Scholarship {
   eligible_countries: string[];
   study_levels: string[];
   fields_of_study: string[];
+  source_name: string | null;
+  source_website_url: string | null;
 }
 
 export const FUNDING_TYPE_LABELS: Record<FundingType, string> = {
