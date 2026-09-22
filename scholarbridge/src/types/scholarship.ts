@@ -14,6 +14,7 @@ export interface Scholarship {
   is_globally_eligible: boolean;
   verification_status: string;
   status: string;
+  created_at: string;
   eligible_countries: string[];
   study_levels: string[];
   fields_of_study: string[];

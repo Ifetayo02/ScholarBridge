@@ -45,6 +45,11 @@ export function ScholarshipsDirectory({
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
   const [selectedFunding, setSelectedFunding] = useState<FundingType[]>([]);
   const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
+  const [selectedFields, setSelectedFields] = useState<string[]>([]);
+  const [selectedEligibility, setSelectedEligibility] = useState<string[]>([]);
+  const [countrySearch, setCountrySearch] = useState("");
+  const [countrySearchFocused, setCountrySearchFocused] = useState(false);
+  const [committedNoMatch, setCommittedNoMatch] = useState(false);
   const [sortBy, setSortBy] = useState("soonest");
 
   const destinationOptions = useMemo(
@@ -72,6 +77,33 @@ export function ScholarshipsDirectory({
       ),
     [initialScholarships]
   );
+  const fieldOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(initialScholarships.flatMap((s) => s.fields_of_study))
+      ).sort(),
+    [initialScholarships]
+  );
+  const eligibilityOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(initialScholarships.flatMap((s) => s.eligible_countries))
+      ).sort(),
+    [initialScholarships]
+  );
+  const globallyEligibleCount = useMemo(
+    () => initialScholarships.filter((s) => s.is_globally_eligible).length,
+    [initialScholarships]
+  );
+
+  const countrySuggestions = useMemo(() => {
+    if (!countrySearch.trim()) return [];
+    const q = countrySearch.trim().toLowerCase();
+    return eligibilityOptions
+      .filter((c) => !selectedEligibility.includes(c))
+      .filter((c) => c.toLowerCase().includes(q))
+      .slice(0, 6);
+  }, [countrySearch, eligibilityOptions, selectedEligibility]);
 
   function toggleFilter<T>(
     list: T[],
@@ -81,10 +113,40 @@ export function ScholarshipsDirectory({
     setList(list.includes(val) ? list.filter((item) => item !== val) : [...list, val]);
   }
 
+  function addEligibleCountry(country: string) {
+    if (!selectedEligibility.includes(country)) {
+      setSelectedEligibility([...selectedEligibility, country]);
+    }
+    setCountrySearch("");
+    setCommittedNoMatch(false);
+  }
+
+  function handleCountryKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+
+    const typed = countrySearch.trim();
+    if (!typed) return;
+
+    const exactMatch = eligibilityOptions.find(
+      (c) => c.toLowerCase() === typed.toLowerCase()
+    );
+
+    if (exactMatch) {
+      addEligibleCountry(exactMatch);
+    } else {
+      setCommittedNoMatch(true);
+    }
+  }
+
   function clearAllFilters() {
     setSelectedLevels([]);
     setSelectedFunding([]);
     setSelectedDestinations([]);
+    setSelectedFields([]);
+    setSelectedEligibility([]);
+    setCountrySearch("");
+    setCommittedNoMatch(false);
   }
 
   const filtered = useMemo(() => {
@@ -98,7 +160,20 @@ export function ScholarshipsDirectory({
       const matchesDestination =
         selectedDestinations.length === 0 ||
         selectedDestinations.includes(s.destination_country);
-      return matchesLevel && matchesFunding && matchesDestination;
+      const matchesField =
+        selectedFields.length === 0 ||
+        selectedFields.some((f) => s.fields_of_study.includes(f));
+      const matchesEligibility =
+        selectedEligibility.length === 0 ||
+        s.is_globally_eligible ||
+        selectedEligibility.some((c) => s.eligible_countries.includes(c));
+      return (
+        matchesLevel &&
+        matchesFunding &&
+        matchesDestination &&
+        matchesField &&
+        matchesEligibility
+      );
     });
 
     if (sortBy === "soonest") {
@@ -110,12 +185,28 @@ export function ScholarshipsDirectory({
           new Date(b.application_deadline).getTime()
         );
       });
+    } else if (sortBy === "newest") {
+      result = [...result].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
     }
 
     return result;
-  }, [initialScholarships, selectedLevels, selectedFunding, selectedDestinations, sortBy]);
+  }, [
+    initialScholarships,
+    selectedLevels,
+    selectedFunding,
+    selectedDestinations,
+    selectedFields,
+    selectedEligibility,
+    sortBy,
+  ]);
 
   const activeTags: { tag: string; remove: () => void }[] = [
+    ...selectedEligibility.map((tag) => ({
+      tag: `Eligible: ${tag}`,
+      remove: () => toggleFilter(selectedEligibility, setSelectedEligibility, tag),
+    })),
     ...selectedLevels.map((tag) => ({
       tag,
       remove: () => toggleFilter(selectedLevels, setSelectedLevels, tag),
@@ -128,6 +219,10 @@ export function ScholarshipsDirectory({
       tag,
       remove: () => toggleFilter(selectedDestinations, setSelectedDestinations, tag),
     })),
+    ...selectedFields.map((tag) => ({
+      tag,
+      remove: () => toggleFilter(selectedFields, setSelectedFields, tag),
+    })),
   ];
 
   return (
@@ -139,10 +234,7 @@ export function ScholarshipsDirectory({
               ScholarBridge
             </Link>
             <form action="/scholarships" className="relative hidden w-72 md:block">
-              <Search
-                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary"
-                aria-hidden="true"
-              />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary" aria-hidden="true" />
               <Input
                 type="search"
                 name="q"
@@ -183,6 +275,83 @@ export function ScholarshipsDirectory({
 
             <div className="space-y-6 pt-6 text-sm">
               <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-secondary">
+                  Where Can I Apply?
+                </p>
+
+                {globallyEligibleCount > 0 && (
+                  <p className="mt-2 text-[11px] text-secondary">
+                    {globallyEligibleCount} scholarship{globallyEligibleCount === 1 ? "" : "s"} open
+                    to all nationalities, regardless of this filter.
+                  </p>
+                )}
+
+                <div className="relative mt-3">
+                  <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-secondary" />
+                  <input
+                    type="text"
+                    value={countrySearch}
+                    onChange={(e) => {
+                      setCountrySearch(e.target.value);
+                      setCommittedNoMatch(false);
+                    }}
+                    onKeyDown={handleCountryKeyDown}
+                    onFocus={() => setCountrySearchFocused(true)}
+                    onBlur={() => setTimeout(() => setCountrySearchFocused(false), 150)}
+                    placeholder="Type your country..."
+                    className="h-9 w-full rounded-md border border-border bg-background pl-8 pr-3 text-xs text-foreground placeholder:text-secondary focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+
+                  {countrySearchFocused && countrySearch.trim() && (
+                    <div className="absolute z-10 mt-1 w-full rounded-md border border-border bg-card shadow-sm">
+                      {committedNoMatch ? (
+                        <p className="px-3 py-2 text-xs text-secondary">
+                          No country-restricted scholarships list &quot;{countrySearch.trim()}&quot;
+                          {globallyEligibleCount > 0
+                            ? ` — but ${globallyEligibleCount} scholarship${globallyEligibleCount === 1 ? "" : "s"} are globally open.`
+                            : "."}
+                        </p>
+                      ) : countrySuggestions.length > 0 ? (
+                        countrySuggestions.map((country) => (
+                          <button
+                            key={country}
+                            type="button"
+                            onMouseDown={() => addEligibleCountry(country)}
+                            className="block w-full px-3 py-2 text-left text-xs text-foreground hover:bg-secondary/10"
+                          >
+                            {country}
+                          </button>
+                        ))
+                      ) : (
+                        <p className="px-3 py-2 text-xs text-secondary">
+                          No country-restricted scholarships list &quot;{countrySearch.trim()}&quot;
+                          {globallyEligibleCount > 0
+                            ? ` — but ${globallyEligibleCount} scholarship${globallyEligibleCount === 1 ? "" : "s"} are globally open.`
+                            : "."}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {selectedEligibility.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {selectedEligibility.map((country) => (
+                      <button
+                        key={country}
+                        type="button"
+                        onClick={() => toggleFilter(selectedEligibility, setSelectedEligibility, country)}
+                        className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-[11px] text-foreground hover:border-primary"
+                      >
+                        {country}
+                        <X className="h-3 w-3 text-secondary" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-border pt-6">
                 <p className="text-xs font-semibold uppercase tracking-wider text-secondary">Study Destination</p>
                 <div className="mt-3 space-y-2.5">
                   {destinationOptions.map((country) => (
@@ -196,9 +365,6 @@ export function ScholarshipsDirectory({
                       <span>{country}</span>
                     </label>
                   ))}
-                  {destinationOptions.length === 0 && (
-                    <p className="text-xs text-secondary">No data yet</p>
-                  )}
                 </div>
               </div>
 
@@ -214,6 +380,23 @@ export function ScholarshipsDirectory({
                         className="h-4 w-4 rounded border-border text-primary accent-primary focus:ring-primary"
                       />
                       <span>{level}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-border pt-6">
+                <p className="text-xs font-semibold uppercase tracking-wider text-secondary">Field of Study</p>
+                <div className="mt-3 space-y-2.5">
+                  {fieldOptions.map((field) => (
+                    <label key={field} className="flex cursor-pointer items-center gap-2.5 text-stone-700 dark:text-stone-300">
+                      <input
+                        type="checkbox"
+                        checked={selectedFields.includes(field)}
+                        onChange={() => toggleFilter(selectedFields, setSelectedFields, field)}
+                        className="h-4 w-4 rounded border-border text-primary accent-primary focus:ring-primary"
+                      />
+                      <span>{field}</span>
                     </label>
                   ))}
                 </div>
@@ -255,6 +438,7 @@ export function ScholarshipsDirectory({
                     className="cursor-pointer appearance-none rounded-sm border-none bg-transparent pr-4 font-semibold text-foreground focus:outline-none"
                   >
                     <option value="soonest">Soonest Deadline</option>
+                    <option value="newest">Newly Added</option>
                   </select>
                   <ChevronDown className="pointer-events-none absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 text-secondary" />
                 </div>
@@ -298,9 +482,16 @@ export function ScholarshipsDirectory({
                     }`}
                   >
                     <div className="flex items-start justify-between">
-                      <span className="rounded border border-border bg-background px-2.5 py-0.5 text-xs text-secondary">
-                        Study in {s.destination_country}
-                      </span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="rounded border border-border bg-background px-2.5 py-0.5 text-xs text-secondary">
+                          Study in {s.destination_country}
+                        </span>
+                        {s.is_globally_eligible && (
+                          <span className="rounded border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400">
+                            Globally Open
+                          </span>
+                        )}
+                      </div>
                       <button type="button" aria-label={`Save ${s.title}`} className="text-secondary transition hover:text-primary">
                         <Bookmark className="h-4 w-4" />
                       </button>

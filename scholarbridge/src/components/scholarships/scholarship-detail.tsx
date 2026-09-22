@@ -110,6 +110,7 @@ export function ScholarshipDetail({ scholarship: s }: { scholarship: Scholarship
               <div className="flex items-center gap-3 self-start">
                 <Button
                   className="bg-primary text-background hover:opacity-90 font-semibold px-6"
+                   nativeButton={false}
                   render={<a href={s.application_url} target="_blank" rel="noopener noreferrer" />}
                 >
                   Apply Now
