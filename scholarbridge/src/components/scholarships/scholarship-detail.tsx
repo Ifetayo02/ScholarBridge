@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import type { Scholarship } from "@/types/scholarship";
 import { FUNDING_TYPE_LABELS } from "@/types/scholarship";
+import { UserMenu } from "@/components/auth/user-menu";
 
 function formatDeadline(deadline: string | null) {
   if (!deadline) return "Not specified";
@@ -66,9 +67,7 @@ export function ScholarshipDetail({ scholarship: s }: { scholarship: Scholarship
               <button aria-label="Notifications" className="text-secondary transition hover:text-foreground">
                 <Bell className="h-5 w-5" />
               </button>
-              <Link href="/login" aria-label="Account" className="text-secondary transition hover:text-foreground">
-                <User className="h-5 w-5" />
-              </Link>
+             <UserMenu />
             </div>
           </div>
         </div>

@@ -5,8 +5,6 @@ import Link from "next/link";
 import {
   Search,
   Bell,
-  User,
-  Bookmark,
   Building2,
   Clock,
   Calendar,
@@ -16,6 +14,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { buttonVariants } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { UserMenu } from "@/components/auth/user-menu";
+import { SaveButton } from "@/components/scholarships/save-button";
 import type { FundingType, Scholarship } from "@/types/scholarship";
 import { FUNDING_TYPE_LABELS } from "@/types/scholarship";
 
@@ -38,9 +38,13 @@ function formatDeadline(deadline: string | null) {
 export function ScholarshipsDirectory({
   initialScholarships,
   initialQuery,
+  savedIds,
+  isLoggedIn,
 }: {
   initialScholarships: Scholarship[];
   initialQuery?: string;
+  savedIds: Set<string>;
+  isLoggedIn: boolean;
 }) {
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
   const [selectedFunding, setSelectedFunding] = useState<FundingType[]>([]);
@@ -256,9 +260,7 @@ export function ScholarshipsDirectory({
             <button aria-label="Notifications" className="text-secondary transition hover:text-foreground">
               <Bell className="h-5 w-5" />
             </button>
-            <Link href="/login" aria-label="Account" className="text-secondary transition hover:text-foreground">
-              <User className="h-5 w-5" />
-            </Link>
+            <UserMenu />
           </div>
         </div>
       </header>
@@ -492,9 +494,12 @@ export function ScholarshipsDirectory({
                           </span>
                         )}
                       </div>
-                      <button type="button" aria-label={`Save ${s.title}`} className="text-secondary transition hover:text-primary">
-                        <Bookmark className="h-4 w-4" />
-                      </button>
+                      <SaveButton
+                        scholarshipId={s.id}
+                        initialSaved={savedIds.has(s.id)}
+                        isLoggedIn={isLoggedIn}
+                        label={`Save ${s.title}`}
+                      />
                     </div>
 
                     <h3 className="mt-3 font-serif text-xl font-semibold leading-snug text-primary">

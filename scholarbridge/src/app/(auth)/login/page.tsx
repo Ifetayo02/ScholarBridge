@@ -43,29 +43,43 @@ export default function LoginPage() {
     setIsSubmitting(true);
     const supabase = createClient();
 
-    const { error: authErr } =
-      mode === "sign-up"
-        ? await supabase.auth.signUp({
-            email: values.email,
-            password: values.password,
-            options: {
-              emailRedirectTo: `${window.location.origin}/callback?next=${redirectTo}`,
-            },
-          })
-        : await supabase.auth.signInWithPassword({
-            email: values.email,
-            password: values.password,
-          });
+    if (mode === "sign-up") {
+      const { data, error: authErr } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/callback?next=${redirectTo}`,
+        },
+      });
+
+      setIsSubmitting(false);
+
+      if (authErr) {
+        setError(authErr.message);
+        return;
+      }
+
+      if (!data.session) {
+        // Email confirmation is required — no session yet, so show the "check your email" state
+        setMagicLinkSent(true);
+        return;
+      }
+
+      // Confirmation is disabled — Supabase returned a session immediately
+      router.push(redirectTo);
+      router.refresh();
+      return;
+    }
+
+    const { error: authErr } = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.password,
+    });
 
     setIsSubmitting(false);
 
     if (authErr) {
       setError(authErr.message);
-      return;
-    }
-
-    if (mode === "sign-up") {
-      setMagicLinkSent(true); // reuse the "check your email" state for signup confirmation
       return;
     }
 
