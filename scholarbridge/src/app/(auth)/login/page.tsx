@@ -20,7 +20,7 @@ type Mode = "sign-in" | "sign-up" | "magic-link";
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("next") ?? "/";
+  const redirectTo = searchParams.get("next") ?? "/saved";
   const authError = searchParams.get("error");
 
   const [mode, setMode] = useState<Mode>("sign-in");

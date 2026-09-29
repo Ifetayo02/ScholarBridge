@@ -18,9 +18,9 @@
   --color-card-elevated: var(--card-elevated);
 
   /* Semantic Palettes */
-  --color-primary: var(--primary);
-  --color-secondary: var(--secondary);
-  --color-accent: var(--accent);
+ --primary: #E8F5EA;     /* was #72A98F — now near-white with a faint green tint, for real contrast on headings/logo/CTAs */
+  --secondary: #8FA89A;   /* was #AAB8B0 — shifted slightly greener/darker so it's clearly distinct from --primary, not just a lighter version of the same hue */
+  --accent: #F59E0B; 
 
   /* Badges */
   --color-badge-success-bg: var(--badge-success-bg);

@@ -191,7 +191,7 @@ export function SavedScholarshipsClient({
                   </div>
 
                   <div className="flex shrink-0 flex-col items-end gap-3 self-stretch justify-between sm:self-center">
-                    
+                    <a
                       href={s.application_url}
                       target="_blank"
                       rel="noopener noreferrer"
