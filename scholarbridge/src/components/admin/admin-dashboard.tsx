@@ -112,14 +112,17 @@ export function AdminDashboard({
     setTab(t);
     setPage(1);
   }
+function handleArchive(id: string) {
+  startTransition(() => {
+    archiveScholarship(id);
+  });
+}
 
-  function handleArchive(id: string) {
-    startTransition(() => archiveScholarship(id));
-  }
-
-  function handleRestore(id: string) {
-    startTransition(() => restoreScholarship(id));
-  }
+function handleRestore(id: string) {
+  startTransition(() => {
+    restoreScholarship(id);
+  });
+}
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
