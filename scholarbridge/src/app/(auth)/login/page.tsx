@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -17,7 +17,7 @@ import {
 
 type Mode = "sign-in" | "sign-up" | "magic-link";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("next") ?? "/saved";
@@ -60,12 +60,10 @@ export default function LoginPage() {
       }
 
       if (!data.session) {
-        // Email confirmation is required — no session yet, so show the "check your email" state
         setMagicLinkSent(true);
         return;
       }
 
-      // Confirmation is disabled — Supabase returned a session immediately
       router.push(redirectTo);
       router.refresh();
       return;
@@ -287,5 +285,13 @@ export default function LoginPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }
