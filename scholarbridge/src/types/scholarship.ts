@@ -1,5 +1,28 @@
 export type FundingType = "full" | "partial" | "tuition" | "other";
 
+export type ApplicationStatus =
+  | "saved"
+  | "preparing"
+  | "applied"
+  | "awarded"
+  | "not_selected";
+
+export const APPLICATION_STATUSES: ApplicationStatus[] = [
+  "saved",
+  "preparing",
+  "applied",
+  "awarded",
+  "not_selected",
+];
+
+export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
+  saved: "Saved",
+  preparing: "Preparing",
+  applied: "Applied",
+  awarded: "Awarded",
+  not_selected: "Not selected",
+};
+
 export interface Scholarship {
   id: string;
   slug: string;
@@ -20,6 +43,10 @@ export interface Scholarship {
   fields_of_study: string[];
   source_name: string | null;
   source_website_url: string | null;
+}
+
+export interface SavedScholarship extends Scholarship {
+  application_status: ApplicationStatus;
 }
 
 export const FUNDING_TYPE_LABELS: Record<FundingType, string> = {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   Search,
@@ -9,18 +9,35 @@ import {
   Calendar,
   Wallet,
   AlertTriangle,
+  ChevronDown,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { UserMenu } from "@/components/auth/user-menu";
-import { toggleSaveScholarship } from "@/app/actions/saved";
-import type { Scholarship } from "@/types/scholarship";
+import {
+  toggleSaveScholarship,
+  updateApplicationStatus,
+} from "@/app/actions/saved";
+import {
+  APPLICATION_STATUSES,
+  APPLICATION_STATUS_LABELS,
+  type ApplicationStatus,
+  type SavedScholarship,
+} from "@/types/scholarship";
+
+type StatusFilter = "all" | ApplicationStatus;
+
+function isPastDeadline(deadline: string | null) {
+  if (!deadline) return false;
+  return new Date(deadline).getTime() < Date.now();
+}
 
 function isUrgent(deadline: string | null) {
   if (!deadline) return false;
-  const daysLeft = (new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+  const daysLeft =
+    (new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
   return daysLeft >= 0 && daysLeft <= 7;
 }
 
@@ -33,32 +50,86 @@ function formatDeadline(deadline: string | null) {
   });
 }
 
+// Upcoming deadlines first, then passed ones, then scholarships with no deadline.
+function deadlineBucket(deadline: string | null) {
+  if (!deadline) return 2;
+  return isPastDeadline(deadline) ? 1 : 0;
+}
+
+function compareByDeadline(a: SavedScholarship, b: SavedScholarship) {
+  const bucketDiff =
+    deadlineBucket(a.application_deadline) -
+    deadlineBucket(b.application_deadline);
+  if (bucketDiff !== 0) return bucketDiff;
+  if (!a.application_deadline || !b.application_deadline) return 0;
+  return (
+    new Date(a.application_deadline).getTime() -
+    new Date(b.application_deadline).getTime()
+  );
+}
+
 export function SavedScholarshipsClient({
   initialScholarships,
 }: {
-  initialScholarships: Scholarship[];
+  initialScholarships: SavedScholarship[];
 }) {
   const [scholarships, setScholarships] = useState(initialScholarships);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [isPending, startTransition] = useTransition();
 
-  function handleRemove(id: string) {
-    setScholarships((prev) => prev.filter((item) => item.id !== id)); // optimistic
+  const counts = useMemo(() => {
+    const base: Record<StatusFilter, number> = {
+      all: scholarships.length,
+      saved: 0,
+      preparing: 0,
+      applied: 0,
+      awarded: 0,
+      not_selected: 0,
+    };
+    scholarships.forEach((s) => {
+      base[s.application_status] += 1;
+    });
+    return base;
+  }, [scholarships]);
+
+  const visible = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return scholarships
+      .filter((s) => statusFilter === "all" || s.application_status === statusFilter)
+      .filter(
+        (s) =>
+          !q ||
+          s.title.toLowerCase().includes(q) ||
+          s.provider.toLowerCase().includes(q) ||
+          s.fields_of_study.some((f) => f.toLowerCase().includes(q))
+      )
+      .sort(compareByDeadline);
+  }, [scholarships, searchQuery, statusFilter]);
+
+  function handleStatusChange(id: string, status: ApplicationStatus) {
+    const previous = scholarships;
+    setScholarships((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, application_status: status } : s))
+    );
     startTransition(async () => {
-      const result = await toggleSaveScholarship(id);
+      const result = await updateApplicationStatus(id, status);
       if (!result.success) {
-        // revert if the server call actually failed
-        setScholarships(initialScholarships);
+        setScholarships(previous);
       }
     });
   }
 
-  const filteredScholarships = scholarships.filter(
-    (s) =>
-      s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.provider.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.fields_of_study.some((f) => f.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  function handleRemove(id: string) {
+    const previous = scholarships;
+    setScholarships((prev) => prev.filter((s) => s.id !== id));
+    startTransition(async () => {
+      const result = await toggleSaveScholarship(id);
+      if (!result.success) {
+        setScholarships(previous);
+      }
+    });
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
@@ -102,35 +173,61 @@ export function SavedScholarshipsClient({
             Saved Scholarships
           </h1>
           <p className="mt-2 text-sm text-secondary">
-            Manage your bookmarked opportunities, sorted by upcoming deadlines.
+            Track each opportunity from saved to awarded, sorted by upcoming deadlines.
           </p>
         </div>
 
+        <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-border text-sm font-medium">
+          {(["all", ...APPLICATION_STATUSES] as StatusFilter[]).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setStatusFilter(tab)}
+              className={`flex items-center gap-1.5 border-b-2 pb-3 ${
+                statusFilter === tab
+                  ? "border-primary text-primary"
+                  : "border-transparent text-secondary hover:text-foreground"
+              }`}
+            >
+              <span>{tab === "all" ? "All" : APPLICATION_STATUS_LABELS[tab]}</span>
+              <span className="rounded bg-secondary/10 px-1.5 py-0.5 text-xs">{counts[tab]}</span>
+            </button>
+          ))}
+        </div>
+
         <div className="mt-8 space-y-5">
-          {filteredScholarships.length === 0 ? (
+          {visible.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card p-12 text-center">
               <Bookmark className="h-8 w-8 text-secondary" />
               <h2 className="mt-3 font-serif text-lg font-semibold text-primary">
-                No saved scholarships found
+                {scholarships.length === 0
+                  ? "No saved scholarships yet"
+                  : "Nothing matches this view"}
               </h2>
               <p className="mt-1 text-xs text-secondary">
-                {searchQuery
-                  ? "No scholarships match your search query."
-                  : "Explore the directory to discover and bookmark opportunities."}
+                {scholarships.length === 0
+                  ? "Explore the directory to discover and bookmark opportunities."
+                  : "Try a different status tab or clear your search."}
               </p>
-              <Link
-                href="/scholarships"
-                className={buttonVariants({
-                  size: "sm",
-                  className: "mt-4 bg-primary text-background hover:opacity-90",
-                })}
-              >
-                Browse Scholarships
-              </Link>
+              {scholarships.length === 0 && (
+                <Link
+                  href="/scholarships"
+                  className={buttonVariants({
+                    size: "sm",
+                    className: "mt-4 bg-primary text-background hover:opacity-90",
+                  })}
+                >
+                  Browse Scholarships
+                </Link>
+              )}
             </div>
           ) : (
-            filteredScholarships.map((s) => {
-              const urgent = isUrgent(s.application_deadline);
+            visible.map((s) => {
+              const status = s.application_status;
+              const needsAction = status === "saved" || status === "preparing";
+              const urgent = needsAction && isUrgent(s.application_deadline);
+              const past = needsAction && isPastDeadline(s.application_deadline);
+
               return (
                 <div
                   key={s.id}
@@ -142,6 +239,12 @@ export function SavedScholarshipsClient({
                         <span className="inline-flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:border-red-950 dark:bg-red-950/40 dark:text-red-400">
                           <AlertTriangle className="h-3 w-3" />
                           Deadline approaching
+                        </span>
+                      )}
+                      {past && (
+                        <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:text-red-400">
+                          <AlertTriangle className="h-3 w-3" />
+                          Deadline passed
                         </span>
                       )}
                       {s.fields_of_study.map((tag) => (
@@ -190,22 +293,46 @@ export function SavedScholarshipsClient({
                     </div>
                   </div>
 
-                  <div className="flex shrink-0 flex-col items-end gap-3 self-stretch justify-between sm:self-center">
+                  <div className="flex w-full shrink-0 flex-col gap-3 sm:w-44">
                     <a
                       href={s.application_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={buttonVariants({
-                        className: "w-full sm:w-32 bg-primary text-background font-semibold hover:opacity-90",
+                        className: "w-full bg-primary text-background font-semibold hover:opacity-90",
                       })}
                     >
                       Apply Now
                     </a>
+
+                    <div>
+                      <label className="block text-[11px] uppercase tracking-wider text-secondary">
+                        Application status
+                      </label>
+                      <div className="relative mt-1">
+                        <select
+                          value={status}
+                          disabled={isPending}
+                          onChange={(e) =>
+                            handleStatusChange(s.id, e.target.value as ApplicationStatus)
+                          }
+                          className="h-9 w-full cursor-pointer appearance-none rounded-md border border-border bg-background pl-3 pr-8 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                        >
+                          {APPLICATION_STATUSES.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {APPLICATION_STATUS_LABELS[opt]}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-secondary" />
+                      </div>
+                    </div>
+
                     <button
                       type="button"
                       disabled={isPending}
                       onClick={() => handleRemove(s.id)}
-                      className="inline-flex items-center gap-1 text-xs text-secondary transition hover:text-red-600 disabled:opacity-50 dark:hover:text-red-400"
+                      className="inline-flex items-center gap-1 self-start text-xs text-secondary transition hover:text-red-600 disabled:opacity-50 dark:hover:text-red-400"
                     >
                       <Bookmark className="h-3.5 w-3.5 fill-current" />
                       <span>Remove</span>

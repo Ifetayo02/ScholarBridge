@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Scholarship } from "@/types/scholarship";
+import {
+  APPLICATION_STATUSES,
+  type ApplicationStatus,
+  type SavedScholarship,
+} from "@/types/scholarship";
 
 export async function getSavedScholarshipIds(): Promise<Set<string>> {
   const supabase = await createClient();
@@ -21,7 +25,7 @@ export async function getSavedScholarshipIds(): Promise<Set<string>> {
   return new Set((data ?? []).map((row) => row.scholarship_id));
 }
 
-export async function getSavedScholarships(): Promise<Scholarship[]> {
+export async function getSavedScholarships(): Promise<SavedScholarship[]> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -32,6 +36,7 @@ export async function getSavedScholarships(): Promise<Scholarship[]> {
     .from("saved_scholarships")
     .select(
       `
+      application_status,
       scholarships (
         id, slug, title, provider, description, funding_type, funding_amount,
         application_deadline, application_url, destination_country,
@@ -49,11 +54,18 @@ export async function getSavedScholarships(): Promise<Scholarship[]> {
     return [];
   }
 
-  const mapped: (Scholarship | null)[] = (data ?? []).map((row) => {
+  const mapped: (SavedScholarship | null)[] = (data ?? []).map((row) => {
     const s = Array.isArray(row.scholarships) ? row.scholarships[0] : row.scholarships;
     if (!s) return null;
 
-    const scholarship: Scholarship = {
+    const rawStatus = String(row.application_status);
+    const applicationStatus: ApplicationStatus = (
+      APPLICATION_STATUSES as string[]
+    ).includes(rawStatus)
+      ? (rawStatus as ApplicationStatus)
+      : "saved";
+
+    const saved: SavedScholarship = {
       id: s.id,
       slug: s.slug,
       title: s.title,
@@ -79,9 +91,10 @@ export async function getSavedScholarships(): Promise<Scholarship[]> {
       ),
       source_name: null,
       source_website_url: null,
+      application_status: applicationStatus,
     };
-    return scholarship;
+    return saved;
   });
 
-  return mapped.filter((s): s is Scholarship => s !== null);
+  return mapped.filter((s): s is SavedScholarship => s !== null);
 }

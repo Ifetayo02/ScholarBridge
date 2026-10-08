@@ -2,10 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import {
+  APPLICATION_STATUSES,
+  type ApplicationStatus,
+} from "@/types/scholarship";
 
 export async function toggleSaveScholarship(scholarshipId: string) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return { success: false, requiresAuth: true };
@@ -29,4 +35,36 @@ export async function toggleSaveScholarship(scholarshipId: string) {
   revalidatePath("/saved");
   revalidatePath("/scholarships");
   return { success: true, saved: !existing };
+}
+
+export async function updateApplicationStatus(
+  scholarshipId: string,
+  status: ApplicationStatus
+) {
+  if (!APPLICATION_STATUSES.includes(status)) {
+    return { success: false };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false };
+  }
+
+  const { error } = await supabase
+    .from("saved_scholarships")
+    .update({ application_status: status })
+    .eq("user_id", user.id)
+    .eq("scholarship_id", scholarshipId);
+
+  if (error) {
+    console.error("Error updating application status:", error);
+    return { success: false };
+  }
+
+  revalidatePath("/saved");
+  return { success: true };
 }
