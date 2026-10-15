@@ -12,10 +12,10 @@ export function RouteTransition({ children }: { children: ReactNode }) {
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={pathname}
-        initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={shouldReduceMotion ? undefined : { opacity: 0, y: -4 }}
-        transition={{ duration: 0.24, ease: "easeOut" }}
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.985 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={shouldReduceMotion ? undefined : { opacity: 0, y: -4, scale: 0.995 }}
+        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       >
         {children}
       </motion.div>

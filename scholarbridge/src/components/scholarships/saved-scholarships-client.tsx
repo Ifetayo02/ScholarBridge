@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { UserMenu } from "@/components/auth/user-menu";
+import { Stagger, StaggerItem } from "@/components/ui/motion";
 import {
   toggleSaveScholarship,
   updateApplicationStatus,
@@ -195,7 +196,7 @@ export function SavedScholarshipsClient({
           ))}
         </div>
 
-        <div className="mt-8 space-y-5">
+        <Stagger className="mt-8 space-y-5">
           {visible.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card p-12 text-center">
               <Bookmark className="h-8 w-8 text-secondary" />
@@ -229,7 +230,7 @@ export function SavedScholarshipsClient({
               const past = needsAction && isPastDeadline(s.application_deadline);
 
               return (
-                <div
+                <StaggerItem
                   key={s.id}
                   className="flex flex-col justify-between gap-6 rounded-xl border border-border bg-card p-6 shadow-2xs transition sm:flex-row sm:items-center"
                 >
@@ -338,11 +339,11 @@ export function SavedScholarshipsClient({
                       <span>Remove</span>
                     </button>
                   </div>
-                </div>
+                </StaggerItem>
               );
             })
           )}
-        </div>
+        </Stagger>
       </main>
     </div>
   );

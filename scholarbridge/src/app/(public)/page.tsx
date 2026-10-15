@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { UserMenu } from "@/components/auth/user-menu";
+import { Reveal, Stagger, StaggerItem } from "@/components/ui/motion";
 
 const quickFilters = ["STEM", "Public Policy", "Business", "Humanities"];
 
@@ -123,6 +124,7 @@ export default function LandingPage() {
         </div>
       </header>
 
+      <Reveal>
       <section className="mx-auto max-w-3xl px-6 py-24 text-center">
         <h1 className="font-serif text-5xl leading-tight tracking-tight text-primary sm:text-6xl">
           Bridge the gap to your future.
@@ -157,18 +159,20 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+      </Reveal>
 
+      <Reveal>
       <section className="mx-auto max-w-6xl border-t border-border px-6 py-16 text-center">
         <h2 className="font-serif text-3xl text-primary">How ScholarBridge Works</h2>
         <p className="mt-1 text-sm text-secondary">
           Three simple steps to fund your education.
         </p>
 
-        <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-3">
+        <Stagger className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-3">
           {howItWorks.map((item) => {
             const Icon = item.icon;
             return (
-              <div
+              <StaggerItem
                 key={item.step}
                 className="flex flex-col items-center rounded-lg border border-border bg-card p-8 text-center"
               >
@@ -179,12 +183,14 @@ export default function LandingPage() {
                   {item.step}. {item.title}
                 </h3>
                 <p className="mt-2 text-sm text-secondary">{item.description}</p>
-              </div>
+              </StaggerItem>
             );
           })}
-        </div>
+        </Stagger>
       </section>
+      </Reveal>
 
+      <Reveal>
       <section className="mx-auto max-w-6xl border-t border-border px-6 py-16">
         <div className="mb-8 flex items-end justify-between">
           <div>
@@ -196,9 +202,9 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <Stagger className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {featuredScholarships.map((s) => (
-            <div
+            <StaggerItem
               key={s.slug}
               className="flex flex-col rounded-lg border border-border bg-card p-6"
             >
@@ -236,34 +242,42 @@ export default function LandingPage() {
                   Details
                 </Link>
               </div>
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </Stagger>
       </section>
+      </Reveal>
 
+      <Reveal>
       <section className="mx-auto max-w-6xl border-t border-border px-6 py-16 text-center">
         <h2 className="font-serif text-3xl text-primary">Explore by Category</h2>
         <p className="mt-1 text-sm text-secondary">
           Find the perfect funding for your field of study.
         </p>
 
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <Stagger className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
           {categories.map((c) => {
             const Icon = c.icon;
             return (
-              <Link
+              <StaggerItem
                 key={c.field}
-                href={`/scholarships?field=${encodeURIComponent(c.field)}`}
                 className="flex flex-col items-center gap-3 rounded-lg border border-border bg-card p-8 transition-colors hover:border-primary"
               >
-                <Icon className="h-6 w-6 text-primary" aria-hidden="true" />
-                <span className="text-sm font-medium text-foreground">{c.name}</span>
-              </Link>
+                <Link
+                  href={`/scholarships?field=${encodeURIComponent(c.field)}`}
+                  className="flex h-full w-full flex-col items-center gap-3"
+                >
+                  <Icon className="h-6 w-6 text-primary" aria-hidden="true" />
+                  <span className="text-sm font-medium text-foreground">{c.name}</span>
+                </Link>
+              </StaggerItem>
             );
           })}
-        </div>
+        </Stagger>
       </section>
+      </Reveal>
 
+      <Reveal>
       <section className="border-t border-border bg-secondary/10">
         <div className="mx-auto max-w-6xl px-6 py-16 text-center">
           <h2 className="font-serif text-3xl text-primary">Student Success Stories</h2>
@@ -271,9 +285,9 @@ export default function LandingPage() {
             Hear from students who funded their education through ScholarBridge.
           </p>
 
-          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <Stagger className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
             {testimonials.map((t) => (
-              <div
+              <StaggerItem
                 key={t.name}
                 className="flex flex-col rounded-lg border border-border bg-card p-6 text-left"
               >
@@ -292,12 +306,14 @@ export default function LandingPage() {
                     <p className="text-xs text-secondary">{t.role}</p>
                   </div>
                 </div>
-              </div>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
         </div>
       </section>
+      </Reveal>
 
+      <Reveal>
       <section className="mx-auto max-w-6xl px-6 py-16">
         <div className="flex flex-col items-center rounded-lg bg-card border border-border px-6 py-14 text-center text-foreground">
           <Bell className="h-6 w-6 text-accent" aria-hidden="true" />
@@ -319,6 +335,7 @@ export default function LandingPage() {
           </form>
         </div>
       </section>
+      </Reveal>
 
       <footer className="border-t border-border bg-card">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-10 sm:flex-row sm:items-center sm:justify-between">

@@ -4,6 +4,7 @@ import "./globals.css";
 import "./design-refresh.css";
 import Link from "next/link";
 import { ThemeProvider } from "@/components/theme-provider";
+import { RouteTransition } from "@/components/ui/route-transition";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -49,7 +50,7 @@ export default function RootLayout({
         data-design={DESIGN_REFRESH_ENABLED ? "refresh" : undefined}
       >
         <ThemeProvider>
-          {children}
+          <RouteTransition>{children}</RouteTransition>
         </ThemeProvider>
       </body>
     </html>

@@ -14,11 +14,12 @@ const containerVariants = {
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 18 },
+  hidden: { opacity: 0, y: 16, scale: 0.95 },
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const },
+    scale: 1,
+    transition: { duration: 0.42, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
 
@@ -36,8 +37,8 @@ export function Reveal({
   return (
     <motion.div
       className={className}
-      initial={shouldReduceMotion ? false : { opacity: 0, y: 18 }}
-      whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+      initial={shouldReduceMotion ? false : { opacity: 0, y: 16, scale: 0.97 }}
+      whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true, amount: 0.12 }}
       transition={{ duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] }}
     >
@@ -73,11 +74,13 @@ export function StaggerItem({
   className,
   layout = false,
   exitOnRemove = false,
+  hoverLift = true,
 }: {
   children: ReactNode;
   className?: string;
   layout?: boolean;
   exitOnRemove?: boolean;
+  hoverLift?: boolean;
 }) {
   const shouldReduceMotion = useReducedMotion();
 
@@ -91,7 +94,9 @@ export function StaggerItem({
           ? { opacity: 0, y: -8, scale: 0.98 }
           : undefined
       }
-      whileHover={shouldReduceMotion ? undefined : { y: -4 }}
+      whileHover={
+        shouldReduceMotion || !hoverLift ? undefined : { y: -3, scale: 1.01 }
+      }
       transition={{ duration: 0.2, ease: "easeOut" }}
     >
       {children}

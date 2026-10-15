@@ -16,6 +16,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { UserMenu } from "@/components/auth/user-menu";
 import { SaveButton } from "@/components/scholarships/save-button";
+import { Stagger, StaggerItem } from "@/components/ui/motion";
 import {
   EMPTY_MATCH,
   hasProfileInfo,
@@ -577,7 +578,7 @@ export function ScholarshipsDirectory({
               </div>
             )}
 
-            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <Stagger className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
               {filtered.length === 0 && (
                 <p className="col-span-full text-sm text-secondary">
                   {initialQuery
@@ -591,7 +592,7 @@ export function ScholarshipsDirectory({
                 const passed = isPassed(s.application_deadline);
                 const m = matches.get(s.id) ?? EMPTY_MATCH;
                 return (
-                  <div
+                  <StaggerItem
                     key={s.id}
                     className={`flex flex-col rounded-lg border p-6 shadow-2xs transition ${
                       urgent
@@ -702,10 +703,10 @@ export function ScholarshipsDirectory({
                         View Details
                       </Link>
                     </div>
-                  </div>
+                  </StaggerItem>
                 );
               })}
-            </div>
+            </Stagger>
           </section>
         </div>
       </main>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Stagger, StaggerItem } from "@/components/ui/motion";
 import { COUNTRIES } from "@/constants/countries";
 import { FIELD_OPTIONS, STUDY_LEVELS } from "@/constants/profile-options";
 import { saveProfile } from "@/app/actions/profile";
@@ -95,13 +96,14 @@ export function ProfileForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div>
+    <form onSubmit={handleSubmit}>
+      <Stagger className="space-y-5">
+      <StaggerItem hoverLift={false}>
         <label className="text-xs font-semibold uppercase tracking-wider text-secondary">Email</label>
         <p className="mt-1.5 text-sm text-foreground">{email}</p>
-      </div>
+      </StaggerItem>
 
-      <div>
+      <StaggerItem hoverLift={false}>
         <label htmlFor="full_name" className="text-xs font-semibold uppercase tracking-wider text-secondary">
           Full name
         </label>
@@ -113,65 +115,78 @@ export function ProfileForm({
           autoComplete="name"
           className="mt-1.5"
         />
-      </div>
+      </StaggerItem>
 
-      <SelectField
-        id="nationality"
-        label="Nationality"
-        value={values.nationality}
-        onChange={(v) => update("nationality", v)}
-        options={COUNTRIES}
-        placeholder="Select your country"
-      />
+      <StaggerItem hoverLift={false}>
+        <SelectField
+          id="nationality"
+          label="Nationality"
+          value={values.nationality}
+          onChange={(v) => update("nationality", v)}
+          options={COUNTRIES}
+          placeholder="Select your country"
+        />
+      </StaggerItem>
 
-      <SelectField
-        id="study_level"
-        label="Study level"
-        value={values.study_level}
-        onChange={(v) => update("study_level", v)}
-        options={STUDY_LEVELS}
-        placeholder="Select a level"
-      />
+      <StaggerItem hoverLift={false}>
+        <SelectField
+          id="study_level"
+          label="Study level"
+          value={values.study_level}
+          onChange={(v) => update("study_level", v)}
+          options={STUDY_LEVELS}
+          placeholder="Select a level"
+        />
+      </StaggerItem>
 
-      <SelectField
-        id="field_of_study"
-        label="Field of study"
-        value={values.field_of_study}
-        onChange={(v) => update("field_of_study", v)}
-        options={FIELD_OPTIONS}
-        placeholder="Select a field"
-      />
+      <StaggerItem hoverLift={false}>
+        <SelectField
+          id="field_of_study"
+          label="Field of study"
+          value={values.field_of_study}
+          onChange={(v) => update("field_of_study", v)}
+          options={FIELD_OPTIONS}
+          placeholder="Select a field"
+        />
+      </StaggerItem>
 
-      <SelectField
-        id="desired_study_country"
-        label="Where do you want to study?"
-        value={values.desired_study_country}
-        onChange={(v) => update("desired_study_country", v)}
-        options={COUNTRIES}
-        placeholder="No preference"
-      />
+      <StaggerItem hoverLift={false}>
+        <SelectField
+          id="desired_study_country"
+          label="Where do you want to study?"
+          value={values.desired_study_country}
+          onChange={(v) => update("desired_study_country", v)}
+          options={COUNTRIES}
+          placeholder="No preference"
+        />
+      </StaggerItem>
 
       {message && (
-        <p
-          role="status"
-          className={`rounded-md border px-3 py-2 text-xs ${
-            message.type === "success"
-              ? "border-border bg-card text-foreground"
-              : "border-red-300 bg-red-50 text-red-700"
-          }`}
-        >
-          {message.text}{" "}
-          {message.type === "success" && (
-            <Link href="/scholarships" className="font-medium text-primary underline underline-offset-2">
-              See your matches
-            </Link>
-          )}
-        </p>
+        <StaggerItem hoverLift={false}>
+          <p
+            role="status"
+            className={`rounded-md border px-3 py-2 text-xs ${
+              message.type === "success"
+                ? "border-border bg-card text-foreground"
+                : "border-red-300 bg-red-50 text-red-700"
+            }`}
+          >
+            {message.text}{" "}
+            {message.type === "success" && (
+              <Link href="/scholarships" className="font-medium text-primary underline underline-offset-2">
+                See your matches
+              </Link>
+            )}
+          </p>
+        </StaggerItem>
       )}
 
-      <Button type="submit" disabled={isPending} className="bg-primary font-semibold text-background hover:opacity-90">
-        {isPending ? "Saving..." : "Save profile"}
-      </Button>
+      <StaggerItem hoverLift={false}>
+        <Button type="submit" disabled={isPending} className="bg-primary font-semibold text-background hover:opacity-90">
+          {isPending ? "Saving..." : "Save profile"}
+        </Button>
+      </StaggerItem>
+      </Stagger>
     </form>
   );
 }
