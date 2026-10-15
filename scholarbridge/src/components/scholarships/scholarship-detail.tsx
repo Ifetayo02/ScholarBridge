@@ -25,6 +25,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import type { Scholarship } from "@/types/scholarship";
 import { FUNDING_TYPE_LABELS } from "@/types/scholarship";
 import { UserMenu } from "@/components/auth/user-menu";
+import { Reveal } from "@/components/ui/motion";
 
 function formatDeadline(deadline: string | null) {
   if (!deadline) return "Not specified";
@@ -73,6 +74,7 @@ export function ScholarshipDetail({ scholarship: s }: { scholarship: Scholarship
         </div>
       </header>
 
+      <Reveal>
       <main className="mx-auto max-w-7xl px-6 py-8">
         <Link
           href="/scholarships"
@@ -289,6 +291,7 @@ export function ScholarshipDetail({ scholarship: s }: { scholarship: Scholarship
           </aside>
         </div>
       </main>
+      </Reveal>
 
       <footer className="mt-16 border-t border-border bg-card">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-10 sm:flex-row sm:items-center sm:justify-between">

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowUpRight, GraduationCap, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,16 +109,51 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-6">
-      <div className="w-full max-w-sm">
-        <Link href="/" className="font-serif text-2xl font-bold text-primary">
+    <main className="auth-shell flex min-h-screen items-center justify-center bg-background">
+      <section className="auth-promo hidden">
+        <Link href="/" className="auth-logo">
+          <span className="auth-logo-mark">
+            <GraduationCap aria-hidden="true" size={20} />
+          </span>
           ScholarBridge
         </Link>
 
-        <h1 className="mt-8 font-serif text-2xl font-semibold text-foreground">
+        <div className="auth-promo-copy">
+          <span className="auth-eyebrow">
+            <Sparkles aria-hidden="true" size={14} />
+            YOUR NEXT CHAPTER STARTS HERE
+          </span>
+          <h1>
+            Make room for <span>what&apos;s next.</span>
+          </h1>
+          <p>
+            Find scholarships that fit your ambitions, keep every deadline in
+            view, and spend more energy on the future you&apos;re building.
+          </p>
+          <Link href="/scholarships" className="auth-promo-link">
+            Explore scholarships <ArrowUpRight aria-hidden="true" size={17} />
+          </Link>
+        </div>
+
+        <div className="auth-promo-footer">
+          <GraduationCap aria-hidden="true" size={19} />
+          <span>A little support can take you a long way.</span>
+        </div>
+      </section>
+
+      <section className="auth-content">
+        <div className="auth-card w-full max-w-sm">
+          <Link href="/" className="auth-logo auth-mobile-logo hidden">
+            <span className="auth-logo-mark">
+              <GraduationCap aria-hidden="true" size={20} />
+            </span>
+            ScholarBridge
+          </Link>
+
+        <h1 className="auth-heading mt-8 font-serif text-2xl font-semibold text-foreground">
           {mode === "sign-up" ? "Create your account" : "Welcome back"}
         </h1>
-        <p className="mt-1 text-sm text-secondary">
+        <p className="auth-description mt-1 text-sm text-secondary">
           {mode === "sign-up"
             ? "Save scholarships and track deadlines."
             : "Sign in to access your saved scholarships."}
@@ -139,7 +175,7 @@ function LoginForm() {
             {mode !== "magic-link" ? (
               <form
                 onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}
-                className="mt-8 space-y-4"
+                className="auth-form mt-8 space-y-4"
               >
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wider text-secondary">
@@ -180,7 +216,7 @@ function LoginForm() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-primary text-background font-semibold"
+                  className="auth-submit w-full bg-primary text-background font-semibold"
                 >
                   {isSubmitting
                     ? "Please wait..."
@@ -192,7 +228,7 @@ function LoginForm() {
             ) : (
               <form
                 onSubmit={magicForm.handleSubmit(handleMagicLinkSubmit)}
-                className="mt-8 space-y-4"
+                className="auth-form mt-8 space-y-4"
               >
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wider text-secondary">
@@ -216,7 +252,7 @@ function LoginForm() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-primary text-background font-semibold"
+                  className="auth-submit w-full bg-primary text-background font-semibold"
                 >
                   {isSubmitting ? "Sending..." : "Send magic link"}
                 </Button>
@@ -283,8 +319,9 @@ function LoginForm() {
             </div>
           </>
         )}
-      </div>
-    </div>
+        </div>
+      </section>
+    </main>
   );
 }
 

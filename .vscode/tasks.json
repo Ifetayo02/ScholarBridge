@@ -1,0 +1,18 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "ScholarBridge audit checks",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/c",
+				"cd /d \"C:\\Users\\DELL\\Desktop\\Desktop\\Personal Projects\\ScholarBridge\\scholarbridge\" && npm.cmd run build && npx.cmd tsc --noEmit"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			]
+		}
+	]
+}

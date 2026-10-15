@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
+import "./design-refresh.css";
 import Link from "next/link";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -13,6 +14,8 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
 });
+
+const DESIGN_REFRESH_ENABLED = true;
 
 export const metadata: Metadata = {
   title: "ScholarBridge — Discover scholarships that fit you",
@@ -43,6 +46,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${fraunces.variable} ${inter.variable} font-sans antialiased bg-background text-foreground`}
+        data-design={DESIGN_REFRESH_ENABLED ? "refresh" : undefined}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}

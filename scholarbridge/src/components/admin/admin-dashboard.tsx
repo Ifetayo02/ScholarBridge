@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AlertTriangle, Search, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Reveal } from "@/components/ui/motion";
 import type { AdminScholarshipRow } from "@/services/admin-scholarships";
 import { archiveScholarship, restoreScholarship } from "@/app/(admin)/admin/actions";
 
@@ -147,6 +148,7 @@ function handleRestore(id: string) {
         </div>
       </header>
 
+      <Reveal>
       <main className="mx-auto max-w-7xl px-6 py-10">
         <p className="text-xs font-medium uppercase tracking-wider text-secondary">
           Administration / Scholarship Directory
@@ -370,6 +372,7 @@ function handleRestore(id: string) {
           </div>
         </div>
       </main>
+      </Reveal>
     </div>
   );
 }
