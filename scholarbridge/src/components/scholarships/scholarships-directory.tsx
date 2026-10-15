@@ -16,13 +16,32 @@ import { buttonVariants } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { UserMenu } from "@/components/auth/user-menu";
 import { SaveButton } from "@/components/scholarships/save-button";
+import {
+  EMPTY_MATCH,
+  hasProfileInfo,
+  matchScholarship,
+  type MatchLabel,
+  type MatchResult,
+} from "@/lib/matching";
 import type { FundingType, Scholarship } from "@/types/scholarship";
+import type { StudentProfile } from "@/types/profile";
 import { FUNDING_TYPE_LABELS } from "@/types/scholarship";
+
+const DAY_MS = 1000 * 60 * 60 * 24;
+
+// A deadline stays open until the end of that day
+function deadlineEnd(deadline: string) {
+  return new Date(deadline).getTime() + DAY_MS;
+}
+
+function isPassed(deadline: string | null) {
+  if (!deadline) return false;
+  return deadlineEnd(deadline) < Date.now();
+}
 
 function isUrgent(deadline: string | null) {
   if (!deadline) return false;
-  const daysLeft =
-    (new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+  const daysLeft = (deadlineEnd(deadline) - Date.now()) / DAY_MS;
   return daysLeft >= 0 && daysLeft <= 7;
 }
 
@@ -35,26 +54,98 @@ function formatDeadline(deadline: string | null) {
   });
 }
 
+function compareDeadline(a: Scholarship, b: Scholarship) {
+  if (!a.application_deadline && !b.application_deadline) return 0;
+  if (!a.application_deadline) return 1;
+  if (!b.application_deadline) return -1;
+  return (
+    new Date(a.application_deadline).getTime() -
+    new Date(b.application_deadline).getTime()
+  );
+}
+
+// Open deadlines first (soonest first), closed ones last
+function compareSoonest(a: Scholarship, b: Scholarship) {
+  const pa = isPassed(a.application_deadline);
+  const pb = isPassed(b.application_deadline);
+  if (pa !== pb) return pa ? 1 : -1;
+  return compareDeadline(a, b);
+}
+
+// Eligible first, then open before closed, then best score, then soonest
+function compareByMatch(
+  a: Scholarship,
+  b: Scholarship,
+  matches: Map<string, MatchResult>
+) {
+  const ma = matches.get(a.id) ?? EMPTY_MATCH;
+  const mb = matches.get(b.id) ?? EMPTY_MATCH;
+  if (ma.eligible !== mb.eligible) return ma.eligible ? -1 : 1;
+  const pa = isPassed(a.application_deadline);
+  const pb = isPassed(b.application_deadline);
+  if (pa !== pb) return pa ? 1 : -1;
+  if (ma.score !== mb.score) return mb.score - ma.score;
+  return compareDeadline(a, b);
+}
+
+const matchBadgeClass: Record<Exclude<MatchLabel, "none">, string> = {
+  strong: "border-primary bg-primary/10 text-primary",
+  possible: "border-border bg-background text-foreground",
+  ineligible:
+    "border-red-300 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400",
+};
+
+const matchBadgeText: Record<Exclude<MatchLabel, "none">, string> = {
+  strong: "Strong match",
+  possible: "Possible match",
+  ineligible: "Not open to you",
+};
+
 export function ScholarshipsDirectory({
   initialScholarships,
   initialQuery,
+  initialField,
   savedIds,
   isLoggedIn,
+  profile,
 }: {
   initialScholarships: Scholarship[];
   initialQuery?: string;
+  initialField?: string;
   savedIds: Set<string>;
   isLoggedIn: boolean;
+  profile: StudentProfile | null;
 }) {
+  const profileActive = hasProfileInfo(profile);
+
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
   const [selectedFunding, setSelectedFunding] = useState<FundingType[]>([]);
   const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
-  const [selectedFields, setSelectedFields] = useState<string[]>([]);
-  const [selectedEligibility, setSelectedEligibility] = useState<string[]>([]);
+  const [selectedFields, setSelectedFields] = useState<string[]>(
+    initialField ? [initialField] : []
+  );
+  const [selectedEligibility, setSelectedEligibility] = useState<string[]>(
+    profile?.nationality ? [profile.nationality] : []
+  );
   const [countrySearch, setCountrySearch] = useState("");
   const [countrySearchFocused, setCountrySearchFocused] = useState(false);
   const [committedNoMatch, setCommittedNoMatch] = useState(false);
-  const [sortBy, setSortBy] = useState("soonest");
+  const [sortBy, setSortBy] = useState(profileActive ? "match" : "soonest");
+
+  const matches = useMemo(() => {
+    const map = new Map<string, MatchResult>();
+    initialScholarships.forEach((s) => map.set(s.id, matchScholarship(profile, s)));
+    return map;
+  }, [initialScholarships, profile]);
+
+  const profileSummary = [
+    profile?.study_level,
+    profile?.field_of_study,
+    profile?.nationality ? `${profile.nationality} applicant` : null,
+    profile?.desired_study_country ? `study in ${profile.desired_study_country}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   const destinationOptions = useMemo(
     () =>
@@ -180,15 +271,10 @@ export function ScholarshipsDirectory({
       );
     });
 
-    if (sortBy === "soonest") {
-      result = [...result].sort((a, b) => {
-        if (!a.application_deadline) return 1;
-        if (!b.application_deadline) return -1;
-        return (
-          new Date(a.application_deadline).getTime() -
-          new Date(b.application_deadline).getTime()
-        );
-      });
+    if (sortBy === "match") {
+      result = [...result].sort((a, b) => compareByMatch(a, b, matches));
+    } else if (sortBy === "soonest") {
+      result = [...result].sort(compareSoonest);
     } else if (sortBy === "newest") {
       result = [...result].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -204,6 +290,7 @@ export function ScholarshipsDirectory({
     selectedFields,
     selectedEligibility,
     sortBy,
+    matches,
   ]);
 
   const activeTags: { tag: string; remove: () => void }[] = [
@@ -266,6 +353,32 @@ export function ScholarshipsDirectory({
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-8">
+        {profileActive ? (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-card px-4 py-3 text-xs text-secondary">
+            <p>
+              Ranked for your profile:{" "}
+              <span className="font-medium text-foreground">{profileSummary}</span>
+            </p>
+            <Link href="/profile" className="font-medium text-primary hover:underline">
+              Edit profile
+            </Link>
+          </div>
+        ) : isLoggedIn ? (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-card px-4 py-3 text-xs text-secondary">
+            <p>Tell us your study level and field to see your best matches first.</p>
+            <Link href="/profile" className="font-medium text-primary hover:underline">
+              Set up profile
+            </Link>
+          </div>
+        ) : (
+          <p className="mb-6 text-xs text-secondary">
+            <Link href="/login?next=/profile" className="font-medium text-primary hover:underline">
+              Sign in and set up a profile
+            </Link>{" "}
+            to rank scholarships for you.
+          </p>
+        )}
+
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
           <aside className="lg:col-span-1">
             <div className="flex items-center justify-between border-b border-border pb-4">
@@ -439,6 +552,7 @@ export function ScholarshipsDirectory({
                     onChange={(e) => setSortBy(e.target.value)}
                     className="cursor-pointer appearance-none rounded-sm border-none bg-transparent pr-4 font-semibold text-foreground focus:outline-none"
                   >
+                    {profileActive && <option value="match">Best match for me</option>}
                     <option value="soonest">Soonest Deadline</option>
                     <option value="newest">Newly Added</option>
                   </select>
@@ -474,6 +588,8 @@ export function ScholarshipsDirectory({
 
               {filtered.map((s) => {
                 const urgent = isUrgent(s.application_deadline);
+                const passed = isPassed(s.application_deadline);
+                const m = matches.get(s.id) ?? EMPTY_MATCH;
                 return (
                   <div
                     key={s.id}
@@ -511,6 +627,28 @@ export function ScholarshipsDirectory({
                       <span>{s.provider}</span>
                     </div>
 
+                    {profileActive && (m.label !== "none" || m.gaps.length > 0) && (
+                      <div className="mt-3">
+                        {m.label !== "none" && (
+                          <span
+                            className={`inline-flex rounded border px-2 py-0.5 text-[11px] font-semibold ${matchBadgeClass[m.label]}`}
+                          >
+                            {matchBadgeText[m.label]}
+                          </span>
+                        )}
+                        <p className="mt-1.5 text-[11px] leading-relaxed text-secondary">
+                          {m.label === "ineligible"
+                            ? m.gaps[0]
+                            : m.reasons.length > 0
+                            ? m.reasons.slice(0, 3).join(" · ")
+                            : ""}
+                          {m.label !== "ineligible" && m.gaps.length > 0
+                            ? `${m.reasons.length > 0 ? " — " : ""}${m.gaps[0]}`
+                            : ""}
+                        </p>
+                      </div>
+                    )}
+
                     <div className="mt-6 space-y-3">
                       <div>
                         <p className="text-[11px] uppercase tracking-wider text-secondary">Value</p>
@@ -546,7 +684,10 @@ export function ScholarshipsDirectory({
                         ) : (
                           <>
                             <Calendar className="h-3.5 w-3.5 text-secondary" />
-                            <span className="text-secondary">{formatDeadline(s.application_deadline)}</span>
+                            <span className="text-secondary">
+                              {passed ? "Closed · " : ""}
+                              {formatDeadline(s.application_deadline)}
+                            </span>
                           </>
                         )}
                       </div>

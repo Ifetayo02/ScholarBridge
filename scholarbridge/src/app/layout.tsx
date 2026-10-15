@@ -48,7 +48,7 @@ export default function RootLayout({
         className={`${fraunces.variable} ${inter.variable} font-sans antialiased bg-background text-foreground`}
         data-design={DESIGN_REFRESH_ENABLED ? "refresh" : undefined}
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider>
           {children}
         </ThemeProvider>
       </body>

@@ -1,23 +1,35 @@
-// src/app/(auth)/callback/route.ts
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server"; // Import the server client
+import { type EmailOtpType } from "@supabase/supabase-js";
+import { NextResponse, type NextRequest } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
-export async function GET(request: Request) {
+function safeNext(value: string | null) {
+  if (value && value.startsWith("/") && !value.startsWith("//")) return value;
+  return "/saved";
+}
+
+export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
+  const next = safeNext(searchParams.get("next"));
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/"; // Redirect destination after successful login
+  const tokenHash = searchParams.get("token_hash");
+  const type = searchParams.get("type") as EmailOtpType | null;
 
-  // If a code is present in the URL, we must exchange it for a session
-  if (code) {
-    const supabase = await createClient(); // Initialize the SERVER client
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    
-    // If successful, redirect the user to their destination
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
-    }
+  const supabase = await createClient();
+
+  // Email links that carry a token hash: work in any browser or device
+  if (tokenHash && type) {
+    const { error } = await supabase.auth.verifyOtp({
+      type,
+      token_hash: tokenHash,
+    });
+    if (!error) return NextResponse.redirect(`${origin}${next}`);
   }
 
-  // If code is missing or exchange fails, redirect to login with an error message
+  // Code exchange: only works in the browser that started the sign-in
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) return NextResponse.redirect(`${origin}${next}`);
+  }
+
   return NextResponse.redirect(`${origin}/login?error=auth_failed`);
 }

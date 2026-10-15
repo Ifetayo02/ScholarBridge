@@ -216,7 +216,7 @@ function LoginForm() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="auth-submit w-full bg-primary text-background font-semibold"
+                  className="auth-submit w-full bg-primary text-white font-semibold"
                 >
                   {isSubmitting
                     ? "Please wait..."
@@ -252,7 +252,7 @@ function LoginForm() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="auth-submit w-full bg-primary text-background font-semibold"
+                  className="auth-submit w-full bg-primary text-white font-semibold"
                 >
                   {isSubmitting ? "Sending..." : "Send magic link"}
                 </Button>

@@ -263,7 +263,7 @@ function handleRestore(id: string) {
         </div>
 
         <div className="mt-6 overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm">
+          <table className="admin-scholarship-table w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-card text-left text-xs uppercase tracking-wider text-secondary">
                 <th className="px-4 py-3 font-medium">Title & Provider</th>

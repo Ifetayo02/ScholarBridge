@@ -13,8 +13,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground antialiased">
-      <aside className="flex w-64 shrink-0 flex-col justify-between border-r border-border bg-card p-6">
+    <div className="admin-shell flex min-h-screen bg-background text-foreground antialiased">
+      <aside className="admin-sidebar flex w-64 shrink-0 flex-col justify-between border-r border-border bg-card p-6">
         <div className="space-y-8">
           <div>
             <Link href="/admin" className="font-serif text-xl font-bold tracking-tight text-primary">
@@ -56,7 +56,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="admin-content min-w-0 flex-1 overflow-y-auto">{children}</main>
     </div>
   );
 }

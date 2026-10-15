@@ -154,7 +154,7 @@ export function ScholarshipForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mx-auto max-w-4xl px-6 py-10">
-      <div className="flex items-center justify-between">
+      <div className="admin-form-header flex flex-wrap items-center justify-between">
         <div>
           <p className="text-xs text-secondary">
             Scholarships / {isEditing ? scholarship!.title : "New Opportunity"}
@@ -183,7 +183,7 @@ export function ScholarshipForm({
       )}
 
       {/* Core Details */}
-      <section className="mt-8 rounded-lg border border-border bg-card p-6">
+      <section className="admin-form-section mt-8 rounded-lg border border-border bg-card p-6">
         <h2 className="font-serif text-lg font-semibold text-primary">Core Details</h2>
 
         <div className="mt-4 space-y-4">
