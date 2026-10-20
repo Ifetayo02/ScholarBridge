@@ -27,6 +27,8 @@
   --color-badge-success-text: var(--badge-success-text);
   --color-badge-warning-bg: var(--badge-warning-bg);
   --color-badge-warning-text: var(--badge-warning-text);
+
+    --color-brand: var(--brand);
 }
 
 /* 2. Define the variable values */
@@ -49,6 +51,8 @@
     --badge-success-text: #0F392B;
     --badge-warning-bg: #FEF3C7;
     --badge-warning-text: #D97706;
+
+        --brand: #1F7A4D;
   }
 
   /* next-themes will add .dark to the html tag when dark mode is active */
@@ -70,6 +74,8 @@
     --badge-success-text: #F3F7F4;
     --badge-warning-bg: #4A3510;
     --badge-warning-text: #F59E0B;
+
+        --brand: #4CAF7D;
   }
 }
 
@@ -85,4 +91,39 @@
   html {
     @apply antialiased;
   }
+}
+
+/* ---------- Brand green for buttons and icons ----------
+   Deliberately OUTSIDE any @layer so these rules override Tailwind utilities.
+   To change the green, edit --brand above. Nothing else needs to change. */
+
+/* Filled buttons, links styled as buttons, and avatar circles */
+.bg-primary {
+  background-color: var(--brand);
+}
+.bg-primary.border-primary {
+  border-color: var(--brand);
+}
+
+/* Every Lucide icon, except status icons that carry meaning:
+   red (urgent or mismatch), emerald (match), accent (amber stars and bell),
+   and the gray "unknown" dash. Add data-keep-color to any icon that should
+   keep its own color. */
+svg[class*="lucide"]:where(
+  :not([class*="text-red"]):not([class*="text-emerald"]):not([class*="text-accent"]):not([data-keep-color]):not(.lucide-minus)
+) {
+  color: var(--brand);
+}
+
+/* A saved bookmark fills with the same green as its outline */
+svg[class*="lucide"][class*="fill-primary"] {
+  fill: var(--brand);
+}
+
+/* Icons inside filled buttons or red/emerald badges keep their parent's text
+   color, otherwise they'd turn green on green or green next to red text */
+.bg-primary svg[class*="lucide"],
+[class*="text-red"] svg[class*="lucide"],
+[class*="text-emerald"] svg[class*="lucide"] {
+  color: inherit;
 }

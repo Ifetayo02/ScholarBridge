@@ -24,6 +24,8 @@ export default async function ScholarshipsPage({
 
   return (
     <ScholarshipsDirectory
+      // Remount when the profile changes so the default filters and sort reset
+      key={JSON.stringify(profile)}
       initialScholarships={scholarships}
       initialQuery={q}
       initialField={field}

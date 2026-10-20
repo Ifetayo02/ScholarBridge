@@ -3,9 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Stagger, StaggerItem } from "@/components/ui/motion";
 import { COUNTRIES } from "@/constants/countries";
 import { FIELD_OPTIONS, STUDY_LEVELS } from "@/constants/profile-options";
 import { saveProfile } from "@/app/actions/profile";
@@ -97,27 +95,26 @@ export function ProfileForm({
 
   return (
     <form onSubmit={handleSubmit}>
-      <Stagger className="space-y-5">
-      <StaggerItem hoverLift={false}>
-        <label className="text-xs font-semibold uppercase tracking-wider text-secondary">Email</label>
-        <p className="mt-1.5 text-sm text-foreground">{email}</p>
-      </StaggerItem>
+      <div className="space-y-5">
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wider text-secondary">Email</label>
+          <p className="mt-1.5 text-sm text-foreground">{email}</p>
+        </div>
 
-      <StaggerItem hoverLift={false}>
-        <label htmlFor="full_name" className="text-xs font-semibold uppercase tracking-wider text-secondary">
-          Full name
-        </label>
-        <Input
-          id="full_name"
-          value={values.full_name}
-          onChange={(e) => update("full_name", e.target.value)}
-          maxLength={80}
-          autoComplete="name"
-          className="mt-1.5"
-        />
-      </StaggerItem>
+        <div>
+          <label htmlFor="full_name" className="text-xs font-semibold uppercase tracking-wider text-secondary">
+            Full name
+          </label>
+          <Input
+            id="full_name"
+            value={values.full_name}
+            onChange={(e) => update("full_name", e.target.value)}
+            maxLength={80}
+            autoComplete="name"
+            className="mt-1.5"
+          />
+        </div>
 
-      <StaggerItem hoverLift={false}>
         <SelectField
           id="nationality"
           label="Nationality"
@@ -126,9 +123,7 @@ export function ProfileForm({
           options={COUNTRIES}
           placeholder="Select your country"
         />
-      </StaggerItem>
 
-      <StaggerItem hoverLift={false}>
         <SelectField
           id="study_level"
           label="Study level"
@@ -137,9 +132,7 @@ export function ProfileForm({
           options={STUDY_LEVELS}
           placeholder="Select a level"
         />
-      </StaggerItem>
 
-      <StaggerItem hoverLift={false}>
         <SelectField
           id="field_of_study"
           label="Field of study"
@@ -148,9 +141,7 @@ export function ProfileForm({
           options={FIELD_OPTIONS}
           placeholder="Select a field"
         />
-      </StaggerItem>
 
-      <StaggerItem hoverLift={false}>
         <SelectField
           id="desired_study_country"
           label="Where do you want to study?"
@@ -159,15 +150,16 @@ export function ProfileForm({
           options={COUNTRIES}
           placeholder="No preference"
         />
-      </StaggerItem>
+      </div>
 
-      {message && (
-        <StaggerItem hoverLift={false}>
+      {/* Save bar: pinned to the bottom of the card so it is always visible */}
+      <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 rounded-b-xl border-t border-border bg-card px-6 py-4">
+        {message && (
           <p
             role="status"
-            className={`rounded-md border px-3 py-2 text-xs ${
+            className={`mb-3 rounded-md border px-3 py-2 text-xs ${
               message.type === "success"
-                ? "border-border bg-card text-foreground"
+                ? "border-border bg-background text-foreground"
                 : "border-red-300 bg-red-50 text-red-700"
             }`}
           >
@@ -178,15 +170,15 @@ export function ProfileForm({
               </Link>
             )}
           </p>
-        </StaggerItem>
-      )}
-
-      <StaggerItem hoverLift={false}>
-        <Button type="submit" disabled={isPending} className="bg-primary font-semibold text-background hover:opacity-90">
+        )}
+        <button
+          type="submit"
+          disabled={isPending}
+          className="inline-flex h-10 w-full items-center justify-center rounded-md border border-primary bg-primary px-6 text-sm font-semibold text-background transition hover:opacity-90 disabled:opacity-50 sm:w-auto"
+        >
           {isPending ? "Saving..." : "Save profile"}
-        </Button>
-      </StaggerItem>
-      </Stagger>
+        </button>
+      </div>
     </form>
   );
 }

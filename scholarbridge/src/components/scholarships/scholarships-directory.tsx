@@ -16,12 +16,12 @@ import { buttonVariants } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { UserMenu } from "@/components/auth/user-menu";
 import { SaveButton } from "@/components/scholarships/save-button";
-import { Stagger, StaggerItem } from "@/components/ui/motion";
+import { MatchSummary } from "@/components/scholarships/match-explanation";
+import { QuickMatchPanel } from "@/components/profile/quick-match-panel";
 import {
   EMPTY_MATCH,
   hasProfileInfo,
   matchScholarship,
-  type MatchLabel,
   type MatchResult,
 } from "@/lib/matching";
 import type { FundingType, Scholarship } from "@/types/scholarship";
@@ -73,7 +73,7 @@ function compareSoonest(a: Scholarship, b: Scholarship) {
   return compareDeadline(a, b);
 }
 
-// Eligible first, then open before closed, then best score, then soonest
+// Fits first, then open before closed, then best match, then soonest
 function compareByMatch(
   a: Scholarship,
   b: Scholarship,
@@ -85,22 +85,10 @@ function compareByMatch(
   const pa = isPassed(a.application_deadline);
   const pb = isPassed(b.application_deadline);
   if (pa !== pb) return pa ? 1 : -1;
+  if (ma.ratio !== mb.ratio) return mb.ratio - ma.ratio;
   if (ma.score !== mb.score) return mb.score - ma.score;
   return compareDeadline(a, b);
 }
-
-const matchBadgeClass: Record<Exclude<MatchLabel, "none">, string> = {
-  strong: "border-primary bg-primary/10 text-primary",
-  possible: "border-border bg-background text-foreground",
-  ineligible:
-    "border-red-300 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400",
-};
-
-const matchBadgeText: Record<Exclude<MatchLabel, "none">, string> = {
-  strong: "Strong match",
-  possible: "Possible match",
-  ineligible: "Not open to you",
-};
 
 export function ScholarshipsDirectory({
   initialScholarships,
@@ -119,6 +107,7 @@ export function ScholarshipsDirectory({
 }) {
   const profileActive = hasProfileInfo(profile);
 
+  const [editingProfile, setEditingProfile] = useState(false);
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
   const [selectedFunding, setSelectedFunding] = useState<FundingType[]>([]);
   const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
@@ -354,31 +343,63 @@ export function ScholarshipsDirectory({
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-8">
-        {profileActive ? (
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-card px-4 py-3 text-xs text-secondary">
+        <div className="mb-6 rounded-md border border-border bg-card px-4 py-3 text-xs text-secondary">
+          {profileActive ? (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p>
+                  Ranked for your profile:{" "}
+                  <span className="font-medium text-foreground">{profileSummary}</span>
+                </p>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditingProfile((v) => !v)}
+                    className="font-medium text-primary hover:underline"
+                  >
+                    {editingProfile ? "Close" : "Change"}
+                  </button>
+                  <Link href="/profile" className="font-medium text-primary hover:underline">
+                    Full profile
+                  </Link>
+                </div>
+              </div>
+              {editingProfile && <QuickMatchPanel profile={profile} />}
+            </>
+          ) : isLoggedIn ? (
+            <>
+              <p className="font-medium text-foreground">Get your best matches first</p>
+              <p className="mt-0.5">
+                Answer four quick questions and we&apos;ll rank scholarships for you. All
+                optional, and you can change them any time.
+              </p>
+              <QuickMatchPanel profile={profile} />
+            </>
+          ) : (
             <p>
-              Ranked for your profile:{" "}
-              <span className="font-medium text-foreground">{profileSummary}</span>
+              <Link href="/login?next=/scholarships" className="font-medium text-primary hover:underline">
+                Sign in
+              </Link>{" "}
+              and answer four quick questions to rank scholarships for you.
             </p>
-            <Link href="/profile" className="font-medium text-primary hover:underline">
-              Edit profile
-            </Link>
-          </div>
-        ) : isLoggedIn ? (
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-card px-4 py-3 text-xs text-secondary">
-            <p>Tell us your study level and field to see your best matches first.</p>
-            <Link href="/profile" className="font-medium text-primary hover:underline">
-              Set up profile
-            </Link>
-          </div>
-        ) : (
-          <p className="mb-6 text-xs text-secondary">
-            <Link href="/login?next=/profile" className="font-medium text-primary hover:underline">
-              Sign in and set up a profile
-            </Link>{" "}
-            to rank scholarships for you.
-          </p>
-        )}
+          )}
+
+          <details className="mt-3">
+            <summary className="cursor-pointer font-medium text-primary hover:underline">
+              How does matching work?
+            </summary>
+            <p className="mt-2 leading-relaxed">
+              We compare four things from your profile with what each scholarship lists: your
+              nationality, study level, field of study, and the country you want to study in.
+              Nationality and study level count most, then field, then destination. If a
+              scholarship isn&apos;t open to your nationality or study level, it is marked
+              &quot;Not a fit&quot; and moved down. Your preferred destination never rules a
+              scholarship out. Details a scholarship doesn&apos;t list aren&apos;t counted.
+              Every card has a &quot;Why this match?&quot; section with the exact reasons. Matches
+              are guidance, so always confirm eligibility on the official page.
+            </p>
+          </details>
+        </div>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
           <aside className="lg:col-span-1">
@@ -578,7 +599,7 @@ export function ScholarshipsDirectory({
               </div>
             )}
 
-            <Stagger className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
               {filtered.length === 0 && (
                 <p className="col-span-full text-sm text-secondary">
                   {initialQuery
@@ -592,7 +613,7 @@ export function ScholarshipsDirectory({
                 const passed = isPassed(s.application_deadline);
                 const m = matches.get(s.id) ?? EMPTY_MATCH;
                 return (
-                  <StaggerItem
+                  <div
                     key={s.id}
                     className={`flex flex-col rounded-lg border p-6 shadow-2xs transition ${
                       urgent
@@ -628,27 +649,7 @@ export function ScholarshipsDirectory({
                       <span>{s.provider}</span>
                     </div>
 
-                    {profileActive && (m.label !== "none" || m.gaps.length > 0) && (
-                      <div className="mt-3">
-                        {m.label !== "none" && (
-                          <span
-                            className={`inline-flex rounded border px-2 py-0.5 text-[11px] font-semibold ${matchBadgeClass[m.label]}`}
-                          >
-                            {matchBadgeText[m.label]}
-                          </span>
-                        )}
-                        <p className="mt-1.5 text-[11px] leading-relaxed text-secondary">
-                          {m.label === "ineligible"
-                            ? m.gaps[0]
-                            : m.reasons.length > 0
-                            ? m.reasons.slice(0, 3).join(" · ")
-                            : ""}
-                          {m.label !== "ineligible" && m.gaps.length > 0
-                            ? `${m.reasons.length > 0 ? " — " : ""}${m.gaps[0]}`
-                            : ""}
-                        </p>
-                      </div>
-                    )}
+                    {profileActive && <MatchSummary match={m} />}
 
                     <div className="mt-6 space-y-3">
                       <div>
@@ -703,10 +704,10 @@ export function ScholarshipsDirectory({
                         View Details
                       </Link>
                     </div>
-                  </StaggerItem>
+                  </div>
                 );
               })}
-            </Stagger>
+            </div>
           </section>
         </div>
       </main>
